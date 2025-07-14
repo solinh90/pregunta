@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¿Mamá del cachorro?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      color: white;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    .pantalla {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      position: absolute;
+      top: 0;
+      left: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 5vw;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .pantalla.active {
+      display: flex;
+      opacity: 1;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 5vw, 3rem);
+      margin-bottom: 40px;
+      line-height: 1.4;
+      animation: slideUp 1s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      animation: fadeIn 2s ease-out;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fondo"></canvas>
+
+  <!-- Pantalla pregunta -->
+  <div id="pantallaPregunta" class="pantalla active">
+    <h1>Este... ¿quieres ser la mamá de mi nuevo cachorro?</h1>
+    <div class="buttons">
+      <button onclick="mostrarPantalla('si')">Sí</button>
+      <button onclick="mostrarPantalla('no')">No</button>
+    </div>
+  </div>
+
+  <!-- Pantalla "Sí" -->
+  <div id="pantallaSi" class="pantalla">
+    <h1>Te amo mucho 💕</h1>
+  </div>
+
+  <!-- Pantalla "No" -->
+  <div id="pantallaNo" class="pantalla">
+    <h1>Está bien... ya lo sabía 😔</h1>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('fondo');
+    const ctx = canvas.getContext('2d');
+
+    function ajustarCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    ajustarCanvas();
+    window.addEventListener('resize', ajustarCanvas);
+
+    const ancho = () => canvas.width;
+    const alto = () => canvas.height;
+
+    let estrellas = [];
+    let corazones = [];
+
+    for (let i = 0; i < 100; i++) {
+      estrellas.push({
+        x: Math.random() * ancho(),
+        y: Math.random() * alto(),
+        r: Math.random() * 1.5,
+        dx: (Math.random() - 0.5) * 0.5,
+        dy: (Math.random() - 0.5) * 0.5
+      });
+    }
+
+    for (let i = 0; i < 30; i++) {
+      corazones.push({
+        x: Math.random() * ancho(),
+        y: Math.random() * alto(),
+        size: 10 + Math.random() * 10,
+        dy: 0.5 + Math.random(),
+        fase: Math.random() * Math.PI * 2
+      });
+    }
+
+    let modo = "estrellas";
+
+    function dibujarEstrellas() {
+      ctx.fillStyle = 'white';
+      estrellas.forEach(e => {
+        e.x += e.dx;
+        e.y += e.dy;
+        if (e.x < 0 || e.x > ancho()) e.dx *= -1;
+        if (e.y < 0 || e.y > alto()) e.dy *= -1;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function dibujarCorazon(x, y, size) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.bezierCurveTo(x, y - size / 2, x - size, y - size / 2, x - size, y);
+      ctx.bezierCurveTo(x - size, y + size, x, y + size * 1.5, x, y + size * 2);
+      ctx.bezierCurveTo(x, y + size * 1.5, x + size, y + size, x + size, y);
+      ctx.bezierCurveTo(x + size, y - size / 2, x, y - size / 2, x, y);
+      ctx.fillStyle = 'pink';
+      ctx.fill();
+    }
+
+    function dibujarCorazones() {
+      corazones.forEach(h => {
+        h.fase += 0.05;
+        const pulso = Math.sin(h.fase) * 0.2 + 1;
+        dibujarCorazon(h.x, h.y, h.size * pulso);
+        h.y -= h.dy;
+        if (h.y < -40) h.y = alto() + 40;
+      });
+    }
+
+    function animar() {
+      ctx.clearRect(0, 0, ancho(), alto());
+      if (modo === "estrellas") {
+        dibujarEstrellas();
+      } else if (modo === "corazones") {
+        dibujarCorazones();
+      }
+      requestAnimationFrame(animar);
+    }
+
+    animar();
+
+    function mostrarPantalla(respuesta) {
+      document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('active'));
+      if (respuesta === "si") {
+        document.getElementById("pantallaSi").classList.add("active");
+        modo = "corazones";
+      } else {
+        document.getElementById("pantallaNo").classList.add("active");
+        modo = "estrellas";
+      }
+    }
+  </script>
+</body>
+</html>
